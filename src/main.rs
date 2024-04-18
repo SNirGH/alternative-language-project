@@ -133,11 +133,87 @@ impl Cell {
 
         Some(oem)
     }
+
+    fn most_common_oem(cells: &[Cell]) -> Option<String> {
+        let mut oem_counts: HashMap<String, usize> = HashMap::new();
+
+        for cell in cells {
+            if let Some(oem) = &cell.oem {
+                let count = oem_counts.entry(oem.clone()).or_insert(0);
+                *count += 1;
+            }
+        }
+
+        oem_counts.into_iter().max_by_key(|&(_, count)| count).map(|(oem, _)| oem)
+    }
+
+    fn mean_body_weight(cells: &[Cell]) -> Option<f32> {
+        let mut sum = 0.0;
+        let mut count = 0;
+
+        for cell in cells {
+            if let Some(weight) = cell.body_weight {
+                sum += weight;
+                count += 1;
+            }
+        }
+
+        if count > 0 {
+            Some(sum / count as f32)
+        } else {
+            None
+        }
+    }
+
+    fn median_body_weight(cells: &[Cell]) -> Option<f32> {
+        let mut weights: Vec<f32> = cells.iter().filter_map(|cell| cell.body_weight).collect();
+        weights.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+
+        let len = weights.len();
+        if len == 0 {
+            None
+        } else if len % 2 == 0 {
+            Some((weights[len / 2 - 1] + weights[len / 2]) / 2.0)
+        } else {
+            Some(weights[len / 2])
+        }
+    }
+
+    fn delete_cell(cells: &mut Vec<Cell>, index: usize) {
+        if index < cells.len() {
+            cells.remove(index);
+        } else {
+            println!("Index out of bounds. No cell deleted.");
+        }
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let cells = Cell::read_csv("cells.csv")?;
+    let mut cells = Cell::read_csv("cells.csv")?;
+    let most_appearances = Cell::most_common_oem(&cells);
     let highest_body_weight = Cell::highest_avg_body_weight_oem(&cells);
+
+
+    if let Some(oem) = most_appearances {
+        println!("Most Common OEM: {}", oem);
+    } else {
+        println!("No data found.");
+    }
+
+    if let Some(mean) = Cell::mean_body_weight(&cells) {
+        println!("Mean Body Weight: {:.2}", mean);
+    } else {
+        println!("Mean Body Weight: N/A");
+    }
+
+    if let Some(median) = Cell::median_body_weight(&cells) {
+        println!("Median Body Weight: {:.2}", median);
+    } else {
+        println!("Median Body Weight: N/A");
+    }
+
+    Cell::delete_cell(&mut cells, 2);
+
     println!("Highest Average Body Weight OEM: {}", highest_body_weight.unwrap());
     for cell in cells {
         println!("{:?}\n", cell);
