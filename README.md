@@ -470,5 +470,5 @@ Rust has Result<T, E> for exception handling. It also has Options which either h
    2019
 
 Outputs:
-![[Output(1).png]]
-![[Output(2).png]]
+![Output 1](./Output(1).png)
+![Output 2](./Output(2).png)
