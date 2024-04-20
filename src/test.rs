@@ -3,6 +3,7 @@ mod tests {
     use crate::Cell;
     use super::*;
 
+    // Test if the file being read is empty.
     #[test]
     fn check_for_empty_file() {
         let file = "cells_test.csv";
@@ -17,12 +18,23 @@ mod tests {
         }
     }
 
+    // Test to check if each transformation is in its final form.
     #[test]
     fn test_display_size_type() {
         let filename = "cells_test.csv";
         match Cell::read_csv(filename) {
             Ok(cells) => {
                 for cell in cells {
+                    if let Some(launch_announced) = cell.launch_announced {
+                        assert_eq!(launch_announced as u32, launch_announced, "Launch announced is not a u32: {:?}", launch_announced);
+                    } else {
+                        assert!(cell.body_weight.is_none(), "Display size is not None: {:?}", cell.body_weight);
+                    }
+                    if let Some(body_weight) = cell.body_weight {
+                        assert!(body_weight.is_finite(), "Display size is not a float: {:?}", body_weight);
+                    } else {
+                        assert!(cell.body_weight.is_none(), "Display size is not None: {:?}", cell.body_weight);
+                    }
                     if let Some(display_size) = cell.display_size {
                         assert!(display_size.is_finite(), "Display size is not a float: {:?}", display_size);
                     } else {
@@ -36,6 +48,7 @@ mod tests {
         }
     }
 
+    // Test to ensure all the values or non-empty.
     #[test]
     fn check_for_none() {
         let cells = Cell::read_csv("cells_test.csv").unwrap();

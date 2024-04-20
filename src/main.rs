@@ -26,7 +26,10 @@ pub struct Cell {
 
 // Implements cell.
 impl Cell {
-    // Initializes all the variable values
+    /*
+     Initializes all the variable values
+     Runtime: O(1)
+     */
     fn new() -> Cell {
         Cell {
             oem: None,
@@ -48,6 +51,8 @@ impl Cell {
         Read the CSV file using the csv library.
         Return a vector of each line of the CSV file.
         Each cell corresponds to a value from the struct variables.
+
+        Runtime: O(n)
      */
     fn read_csv(filename: &str) -> Result<Vec<Cell>, Box<dyn Error>> {
         let file = File::open(filename)?;
@@ -117,7 +122,12 @@ impl Cell {
         }
     }
 
-    fn most_phones_launched_year(cells: &[Cell]) -> Option<u32> {
+    /*
+        Function used to check which year after the year 1999 released the most amount of phones.
+
+        Runtime: O(n)
+     */
+    fn year_most_phones_launched__after_year(cells: &[Cell]) -> Option<u32> {
         let mut year_counts: HashMap<u32, usize> = HashMap::new();
 
         for cell in cells {
@@ -132,6 +142,11 @@ impl Cell {
         year_counts.into_iter().max_by_key(|&(_, count)| count).map(|(year, _)| year)
     }
 
+    /*
+        Function used to check which phone oem had the highest average weight.
+
+        Runtime: O(n)
+     */
     fn highest_avg_body_weight_oem(cells: &[Cell]) -> Option<String> {
         let mut oem_weights: HashMap<String, (f32, usize)> = HashMap::new();
 
@@ -160,6 +175,11 @@ impl Cell {
         Some(oem)
     }
 
+    /*
+        Function used which phones had a single sensor. This is determined by splitting the cell by ','
+
+        Runtime: O(n)
+     */
     fn count_phones_with_single_sensor(cells: &[Cell]) -> usize {
         let mut count = 0;
 
@@ -175,6 +195,11 @@ impl Cell {
         count
     }
 
+    /*
+        Function used to check which phones were announced one year, but released on a different year.
+
+        Runtime: O(n)
+     */
     fn phones_announced_in_one_year_released_in_another(cells: &[Cell]) -> Vec<(String, String)> {
         let mut mismatched_years = Vec::new();
 
@@ -191,7 +216,11 @@ impl Cell {
         mismatched_years
     }
 
+    /*
+        Function used to check which oem was the most common in the file.
 
+        Runtime: O(n)
+     */
     fn most_common_oem(cells: &[Cell]) -> Option<String> {
         let mut oem_counts: HashMap<String, usize> = HashMap::new();
 
@@ -205,6 +234,11 @@ impl Cell {
         oem_counts.into_iter().max_by_key(|&(_, count)| count).map(|(oem, _)| oem)
     }
 
+    /*
+        Function used to check what the most common display size is.
+
+        Runtime: O(n)
+     */
     fn most_common_display_size(cells: &[Cell]) -> Option<String> {
         let mut oem_counts: HashMap<String, usize> = HashMap::new();
 
@@ -218,6 +252,11 @@ impl Cell {
         oem_counts.into_iter().max_by_key(|&(_, count)| count).map(|(oem, _)| oem)
     }
 
+    /*
+        Function used to the mean (average) body weight.
+
+        Runtime: O(n)
+     */
     fn mean_body_weight(cells: &[Cell]) -> Option<f32> {
         let mut sum = 0.0;
         let mut count = 0;
@@ -236,6 +275,11 @@ impl Cell {
         }
     }
 
+    /*
+        Function used to check the median body weight throughout the file.
+
+        Runtime: O(n)
+     */
     fn median_body_weight(cells: &[Cell]) -> Option<f32> {
         let mut weights: Vec<f32> = cells.iter().filter_map(|cell| cell.body_weight).collect();
         weights.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
@@ -250,6 +294,11 @@ impl Cell {
         }
     }
 
+    /*
+        Create a new Cell in the vector. This does not affect the file itself.
+
+        Runtime: O(n)
+     */
     fn insert_cell(cells: &mut Vec<Cell>, index: usize, new_cell: Cell) {
         if index <= cells.len() {
             cells.insert(index, new_cell);
@@ -258,6 +307,11 @@ impl Cell {
         }
     }
 
+    /*
+        Modify an existing Cell within the vector.
+
+        Runtime: O(1)
+     */
     fn modify_cell(cells: &mut Vec<Cell>, index: usize, modified_cell: Cell) {
         if let Some(cell) = cells.get_mut(index) {
             *cell = modified_cell;
@@ -266,6 +320,11 @@ impl Cell {
         }
     }
 
+    /*
+        Delete an existing Cell within the vector.
+
+        Runtime: O(n)
+     */
     fn delete_cell(cells: &mut Vec<Cell>, index: usize) {
         if index < cells.len() {
             cells.remove(index);
@@ -355,7 +414,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //
     // Cell::delete_cell(&mut cells, 2);
 
-    if let Some(year) = Cell::most_phones_launched_year(&cells) {
+    if let Some(year) = Cell::year_most_phones_launched__after_year(&cells) {
         println!("Year with most phones launched after 1999: {}", year);
     } else {
         println!("None");
