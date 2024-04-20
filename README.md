@@ -468,3 +468,7 @@ Rust has Result<T, E> for exception handling. It also has Options which either h
    432
 4. What year had the most phones launched in any year later than 1999?
    2019
+
+Outputs:
+![[Output(1).png]]
+![[Output(2).png]]
