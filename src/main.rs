@@ -1,3 +1,5 @@
+mod test;
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use csv;
@@ -6,7 +8,8 @@ use std::error::Error;
 use std::fs::File;
 
 #[derive(Debug)]
-struct Cell {
+// Create a struct called Cell; create the variables and their respective types.
+pub struct Cell {
     oem: Option<String>,
     model: Option<String>,
     launch_announced: Option<u32>,
@@ -21,7 +24,9 @@ struct Cell {
     platform_os: Option<String>,
 }
 
+// Implements cell.
 impl Cell {
+    // Initializes all the variable values
     fn new() -> Cell {
         Cell {
             oem: None,
@@ -39,6 +44,11 @@ impl Cell {
         }
     }
 
+    /*
+        Read the CSV file using the csv library.
+        Return a vector of each line of the CSV file.
+        Each cell corresponds to a value from the struct variables.
+     */
     fn read_csv(filename: &str) -> Result<Vec<Cell>, Box<dyn Error>> {
         let file = File::open(filename)?;
         let mut reader = csv::Reader::from_reader(file);
@@ -98,12 +108,28 @@ impl Cell {
         Ok(cells)
     }
 
+    // Checks if the value passed in is '-' or blank. If yes, replace it with the value None
     fn check_empty(value: &str) -> Option<String> {
         if value.trim().is_empty() || value.trim() == "-" {
             None
         } else {
             Some(value.to_string())
         }
+    }
+
+    fn most_phones_launched_year(cells: &[Cell]) -> Option<u32> {
+        let mut year_counts: HashMap<u32, usize> = HashMap::new();
+
+        for cell in cells {
+            if let Some(year) = cell.launch_announced {
+                if year > 1999 {
+                    let count = year_counts.entry(year).or_insert(0);
+                    *count += 1;
+                }
+            }
+        }
+
+        year_counts.into_iter().max_by_key(|&(_, count)| count).map(|(year, _)| year)
     }
 
     fn highest_avg_body_weight_oem(cells: &[Cell]) -> Option<String> {
@@ -134,12 +160,57 @@ impl Cell {
         Some(oem)
     }
 
+    fn count_phones_with_single_sensor(cells: &[Cell]) -> usize {
+        let mut count = 0;
+
+        for cell in cells {
+            if let Some(sensors_str) = &cell.features_sensors {
+                let sensors = sensors_str.split(',').map(|s| s.trim()).collect::<Vec<&str>>();
+                if sensors.len() == 1 {
+                    count += 1;
+                }
+            }
+        }
+
+        count
+    }
+
+    fn phones_announced_in_one_year_released_in_another(cells: &[Cell]) -> Vec<(String, String)> {
+        let mut mismatched_years = Vec::new();
+
+        for cell in cells {
+            if let (Some(announced_year), Some(released_year)) = (cell.launch_announced, &cell.launch_status) {
+                if announced_year != released_year.parse().unwrap_or_default() {
+                    if let (Some(oem), Some(model)) = (&cell.oem, &cell.model) {
+                        mismatched_years.push((oem.clone(), model.clone()));
+                    }
+                }
+            }
+        }
+
+        mismatched_years
+    }
+
+
     fn most_common_oem(cells: &[Cell]) -> Option<String> {
         let mut oem_counts: HashMap<String, usize> = HashMap::new();
 
         for cell in cells {
             if let Some(oem) = &cell.oem {
                 let count = oem_counts.entry(oem.clone()).or_insert(0);
+                *count += 1;
+            }
+        }
+
+        oem_counts.into_iter().max_by_key(|&(_, count)| count).map(|(oem, _)| oem)
+    }
+
+    fn most_common_display_size(cells: &[Cell]) -> Option<String> {
+        let mut oem_counts: HashMap<String, usize> = HashMap::new();
+
+        for cell in cells {
+            if let Some(display_size) = &cell.display_size {
+                let count = oem_counts.entry(display_size.clone().to_string()).or_insert(0);
                 *count += 1;
             }
         }
@@ -179,11 +250,27 @@ impl Cell {
         }
     }
 
+    fn insert_cell(cells: &mut Vec<Cell>, index: usize, new_cell: Cell) {
+        if index <= cells.len() {
+            cells.insert(index, new_cell);
+        } else {
+            println!("Index out of bounds.");
+        }
+    }
+
+    fn modify_cell(cells: &mut Vec<Cell>, index: usize, modified_cell: Cell) {
+        if let Some(cell) = cells.get_mut(index) {
+            *cell = modified_cell;
+        } else {
+            println!("Index out of bounds.");
+        }
+    }
+
     fn delete_cell(cells: &mut Vec<Cell>, index: usize) {
         if index < cells.len() {
             cells.remove(index);
         } else {
-            println!("Index out of bounds. No cell deleted.");
+            println!("Index out of bounds.");
         }
     }
 }
@@ -191,8 +278,22 @@ impl Cell {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut cells = Cell::read_csv("cells.csv")?;
     let most_appearances = Cell::most_common_oem(&cells);
+    let most_common_display_size = Cell::most_common_display_size(&cells);
     let highest_body_weight = Cell::highest_avg_body_weight_oem(&cells);
 
+    let phones_with_mismatched_years = Cell::phones_announced_in_one_year_released_in_another(&cells);
+
+    if phones_with_mismatched_years.is_empty() {
+        println!("No phones were announced in one year and released in another.");
+    } else {
+        println!("Phones announced in one year and released in another:");
+        for (oem, model) in phones_with_mismatched_years {
+            println!("OEM: {}, Model: {}", oem, model);
+        }
+    }
+
+    let phones_with_single_sensor = Cell::count_phones_with_single_sensor(&cells);
+    println!("Phones with only one feature sensor: {}", phones_with_single_sensor);
 
     if let Some(oem) = most_appearances {
         println!("Most Common OEM: {}", oem);
@@ -200,19 +301,65 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("No data found.");
     }
 
+    if let Some(display_size) = most_common_display_size {
+        println!("Most Common Display Size: {}", display_size);
+    } else {
+        println!("None");
+    }
+
     if let Some(mean) = Cell::mean_body_weight(&cells) {
         println!("Mean Body Weight: {:.2}", mean);
     } else {
-        println!("Mean Body Weight: N/A");
+        println!("None");
     }
 
     if let Some(median) = Cell::median_body_weight(&cells) {
         println!("Median Body Weight: {:.2}", median);
     } else {
-        println!("Median Body Weight: N/A");
+        println!("None");
     }
 
-    Cell::delete_cell(&mut cells, 2);
+    let new_cell = Cell {
+        oem: Some("New OEM".to_string()),
+        model: Some("New Model".to_string()),
+        launch_announced: Some(2024),
+        launch_status: Some("New".to_string()),
+        body_dimensions: Some("New Dimensions".to_string()),
+        body_weight: Some(150.0),
+        body_sim: Some("New SIM".to_string()),
+        display_type: Some("New Type".to_string()),
+        display_size: Some(6.0),
+        display_resolution: Some("New Resolution".to_string()),
+        features_sensors: Some("New Sensors".to_string()),
+        platform_os: Some("New OS".to_string()),
+    };
+
+    // let modified = Cell {
+    //     oem: Some("New OEM".to_string()),
+    //     model: Some("New Model".to_string()),
+    //     launch_announced: Some(2024),
+    //     launch_status: Some("New".to_string()),
+    //     body_dimensions: Some("New Dimensions".to_string()),
+    //     body_weight: Some(150.0),
+    //     body_sim: Some("New SIM".to_string()),
+    //     display_type: Some("New Type".to_string()),
+    //     display_size: Some(6.0),
+    //     display_resolution: Some("New Resolution".to_string()),
+    //     features_sensors: Some("New Sensors".to_string()),
+    //     platform_os: Some("New OS".to_string()),
+    // };
+    //
+    // Cell::insert_cell(&mut cells, 1, new_cell);
+    //
+    // Cell::modify_cell(&mut cells, 0, modified);
+    //
+    // Cell::delete_cell(&mut cells, 2);
+
+    if let Some(year) = Cell::most_phones_launched_year(&cells) {
+        println!("Year with most phones launched after 1999: {}", year);
+    } else {
+        println!("None");
+    }
 
     println!("Highest Average Body Weight OEM: {}", highest_body_weight.unwrap());
     for cell in cells {
