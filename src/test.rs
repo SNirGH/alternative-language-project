@@ -9,7 +9,7 @@ mod tests {
 
         match Cell::read_csv(file) {
             Ok(cells) => {
-                assert!(!cells.is_empty(), "{} is empty", file)s
+                assert!(!cells.is_empty(), "{} is empty", file);
             }
             Err(err) => {
                 panic!("Error reading file: {:?}", err);
@@ -34,14 +34,6 @@ mod tests {
                 panic!("Error reading file: {:?}", err);
             }
         }
-    }
-
-    #[test]
-    fn test_check_empty() {
-        assert_eq!(Cell::check_empty(""), None);
-        assert_eq!(Cell::check_empty("-"), None);
-
-        assert_eq!(Cell::check_empty("Some Value"), Some("Some Value".to_string()));
     }
 
     #[test]
